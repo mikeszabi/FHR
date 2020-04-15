@@ -8,6 +8,7 @@ Created on Tue Apr 14 12:20:36 2020
 import os
 import numpy as np
 import pandas as pd
+import time
 
 from tools.file_helper import filelist_in_depth 
 
@@ -24,7 +25,7 @@ measure_data_files=filelist_in_depth(base_dir,level=2,date_sort=False,included_e
 
 
 for i_file in range(len(measure_data_files)):
-    i_file=0
+    i_file=2
     
     measure_data=np.load(measure_data_files[i_file])
     
@@ -42,6 +43,7 @@ for i_file in range(len(measure_data_files)):
     
     for i_sample in range(mdf.shape[0]):
         
+        i_sample=0
         fig, ax = plt.subplots()
         ax.plot(mdf.iloc[i_sample,:N])
         ax.plot(rolling_max.iloc[i_sample,:N])
@@ -52,7 +54,10 @@ for i_file in range(len(measure_data_files)):
     
         ts=mdf.iloc[i_sample,:N].dropna()
         
+        t=time.time()
         yf = np.fft.fft(ts)
+        print(time.time()-t)
+        
         xf = np.linspace(0.0, 1.0/(2.0*T), N/2)
         
         fig, ax = plt.subplots()
