@@ -33,12 +33,15 @@ def filelist_in_depth(base_dir,level=1,date_sort=False,included_extenstions = ['
     return filelist_indir
 
 
-def get_training_and_testing_sets(file_list,split=0.7):
+def get_training_and_testing_sets(file_list,split=[0.7,0.2,0.1]):
     shuffle(file_list)
-    split_index = floor(len(file_list) * split)
-    training = file_list[:split_index]
-    testing = file_list[split_index:]
-    return training, testing
+    split_index_1 = floor(len(file_list) * split[0])
+    split_index_2 = floor(len(file_list) * (split[0]+split[1]))
+
+    training = file_list[:split_index_1]
+    testing = file_list[split_index_1:split_index_2]
+    validation = file_list[split_index_2:]
+    return training, testing, validation
 
 #def get_exif_data(image_file,disp=False):
 #    """Returns a dictionary from the exif data of an PIL Image item. Also converts the GPS Tags"""

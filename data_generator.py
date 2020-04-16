@@ -14,15 +14,17 @@ from tensorflow.keras.layers import Conv1D
 from tensorflow.keras.layers import MaxPooling1D
 from tensorflow.keras.layers import Reshape
 
-batch_size = 32
-nb_classes = 10
-nb_epoch = 12
+from matplotlib import pyplot as plt
+
+batch_size = 128
+
 
 callbacks_list = [
     tf.keras.callbacks.ModelCheckpoint(
-        filepath='best_model.{epoch:02d}-{val_loss:.2f}.h5',
+        filepath=r'./models/best_model.{epoch:02d}-{val_loss:.2f}.h5',
         monitor='val_loss', save_best_only=True),
-    tf.keras.callbacks.EarlyStopping(monitor='acc', patience=1)
+    tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=3),
+    tf.keras.callbacks.TensorBoard()
 ]
 
 def myGenerator(data_files,batch_size=32):
@@ -32,10 +34,11 @@ def myGenerator(data_files,batch_size=32):
     while True:
         measure_data=np.load(data_files[i_file])
         # filter data with confidence
+        # todo: data preprocessing
         measure_data = measure_data[measure_data[:,1201]>0.5,:]
         
         len_data=measure_data.shape[0]
-        print(len_data)
+        #print(len_data)
         i_current=remaining_data_chunk.shape[0]
         
         while True:
@@ -48,6 +51,7 @@ def myGenerator(data_files,batch_size=32):
                 # Go to the next file
                 i_file+=1
                 if i_file == len(data_files):
+                    print('end of file list')
                     i_file=0 #so that fileIndex wraps back and loop goes on indefinitely
                 break
             else:                   
@@ -56,11 +60,12 @@ def myGenerator(data_files,batch_size=32):
                 xy=np.vstack([remaining_data_chunk,new_data_chunk])
                 x=xy[:,0:1200]
                 x=x.reshape(x.shape[0],x.shape[1],1)
-                y=xy[:,1201]
+                y=xy[:,1200]
                 yield x,y
                 remaining_data_chunk=np.empty([0,1202])
 
 train_generator=myGenerator(training_data_files,batch_size=batch_size)
+validation_generator=myGenerator(validation_data_files,batch_size=batch_size)
 
 
 # define model
@@ -73,14 +78,35 @@ model.add(Dense(50, activation='relu'))
 model.add(Dense(1))
 model.compile(optimizer='adam', loss='mse')
 print(model.summary())
-model.fit_generator(train_generator, steps_per_epoch = 100, epochs = 10, verbose=2, callbacks=[], validation_data=None)
+
+model.fit_generator(train_generator, steps_per_epoch = 1000, epochs = 10, 
+                    validation_data=validation_generator, validation_steps=150,
+                    verbose=2, callbacks=callbacks_list)
 
 
+model.reset_metrics()
+#genesis=myGenerator(validation_data_files,batch_size=32)
+#
+#a=next(genesis)
+#
+#for x,y in genesis:
+#    b=2
+#    #print(x.shape[0])
+    
+    
+# Save the model
+model.save(r'./models/best_model.h5')
 
-genesis=myGenerator(training_data_files,batch_size=32)
+# Recreate the exact same model purely from the file
+new_model = tf.keras.models.load_model(r'./models/best_model.h5')
 
-a=next(genesis)
+test_generator=myGenerator(testing_data_files,batch_size=256)
 
-for x,y in genesis:
-    b=2
-    print(x.shape[0])
+
+for x,y in test_generator:
+    
+    x,y = next(train_generator)
+    new_predictions = new_model.predict(x)
+    plt.scatter(y,new_predictions,marker='o')
+    #print(x.shape[0])
+    
