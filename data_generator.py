@@ -36,6 +36,7 @@ def myGenerator(data_files,batch_size=32):
         # filter data with confidence
         # todo: data preprocessing
         measure_data = measure_data[measure_data[:,1201]>0.5,:]
+        measure_data = measure_data[measure_data[:,1200]<1.5,:]
         
         len_data=measure_data.shape[0]
         #print(len_data)
