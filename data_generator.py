@@ -16,7 +16,7 @@ from tensorflow.keras.layers import Reshape
 
 from matplotlib import pyplot as plt
 
-batch_size = 128
+batch_size = 256
 
 
 callbacks_list = [
@@ -27,7 +27,7 @@ callbacks_list = [
     tf.keras.callbacks.TensorBoard()
 ]
 
-def myGenerator(data_files,batch_size=32):
+def myGenerator(data_files,batch_size=32, end_alert=True):
     i_file=0
     i_current=0
     remaining_data_chunk=np.empty([0,1202])
@@ -37,23 +37,27 @@ def myGenerator(data_files,batch_size=32):
         # todo: data preprocessing
         measure_data = measure_data[measure_data[:,1201]>0.5,:]
         measure_data = measure_data[measure_data[:,1200]<1.5,:]
+        # filter
         
-        len_data=measure_data.shape[0]
-        #print(len_data)
+        len_data=measure_data.shape[0]        
         i_current=remaining_data_chunk.shape[0]
+
         
         while True:
             n_rows2load = batch_size-i_current % batch_size
                 
             if i_current+n_rows2load > len_data:
                 new_data_chunk=measure_data[i_current:len_data]
-                i_current=0
                 remaining_data_chunk=np.vstack([remaining_data_chunk,new_data_chunk])
                 # Go to the next file
                 i_file+=1
+                i_current=0
                 if i_file == len(data_files):
                     print('end of file list')
                     i_file=0 #so that fileIndex wraps back and loop goes on indefinitely
+                    remaining_data_chunk=np.empty([0,1202])
+                    if end_alert:
+                        yield np.empty([0,]),np.empty([0,])
                 break
             else:                   
                 new_data_chunk=measure_data[i_current:i_current+n_rows2load]
@@ -62,8 +66,9 @@ def myGenerator(data_files,batch_size=32):
                 x=xy[:,0:1200]
                 x=x.reshape(x.shape[0],x.shape[1],1)
                 y=xy[:,1200]
-                yield x,y
                 remaining_data_chunk=np.empty([0,1202])
+                yield x,y
+
 
 train_generator=myGenerator(training_data_files,batch_size=batch_size)
 validation_generator=myGenerator(validation_data_files,batch_size=batch_size)

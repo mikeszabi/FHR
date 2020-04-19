@@ -13,7 +13,7 @@ batch_size = 128
 
 
 
-def myGenerator(data_files,batch_size=32):
+def myGenerator(data_files,batch_size=32, end_alert=True):
     i_file=0
     i_current=0
     remaining_data_chunk=np.empty([0,1202])
@@ -42,7 +42,8 @@ def myGenerator(data_files,batch_size=32):
                     print('end of file list')
                     i_file=0 #so that fileIndex wraps back and loop goes on indefinitely
                     remaining_data_chunk=np.empty([0,1202])
-                    yield np.empty([0,]),np.empty([0,])
+                    if end_alert:
+                        yield np.empty([0,]),np.empty([0,])
                 break
             else:                   
                 new_data_chunk=measure_data[i_current:i_current+n_rows2load]
