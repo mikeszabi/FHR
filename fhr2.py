@@ -23,6 +23,10 @@ data_dir=os.path.join(base_dir,'Zoli','1')
 
 measure_data_files=filelist_in_depth(base_dir,level=2,date_sort=False,included_extenstions = ['*.npy'])
 
+data_files=measure_data_files[0]
+measure_data=np.load(data_files)
+
+#x=x.reshape(x.shape[0],x.shape[1],1)
 
 for i_file in range(len(measure_data_files)):
     i_file=2
